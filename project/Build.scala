@@ -16,7 +16,7 @@ object BuildSettings {
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization := "com.linkedin",
     version      := "0.6.29",
-    scalaVersion := "2.8.1",
+    scalaVersion := "2.9.1",
     credentialsSetting,
 //    publishArtifact in (Compile, packageDoc) := false,
     publishTo <<= (version) { version: String =>
@@ -38,7 +38,7 @@ object ClusterDependencies {
   val PROTOBUF_VER = "2.4.0a"
   val LOG4J_VER = "1.2.16"
 
-  val SPECS_VER = "1.6.7"
+  val SPECS_VER = "1.6.9"
   val MOCKITO_VER = "1.8.4"
   val CGLIB_VER = "2.1_3"
   val OBJENESIS = "1.0"
@@ -125,7 +125,7 @@ object NorbertBuild extends Build {
 
     // Generating documentation fails because of our proto sources. This is a hacked up task to put them on the
     // classpath and proceed running with everything else.
-    def filteredDocTask: Project.Initialize[Task[File]] =
+/*    def filteredDocTask: Project.Initialize[Task[File]] =
       (classDirectory in Compile, cacheDirectory in Compile, compileInputs in Compile, streams in Compile, docDirectory in Compile, configuration in Compile , scaladocOptions in Compile)
       .map { (classDir, cache, in, s, target, config, options) =>
         val d = new Scaladoc(in.config.maxErrors, in.compilers.scalac)
@@ -142,7 +142,7 @@ object NorbertBuild extends Build {
 
         d.cached(cache / "doc", Defaults.nameForSrc(config.name), /*scalaSources*/ emptySources, classpath , target, options, s.log)
         target
-      }
+      }*/
 
     Project(
       id           = "norbert",
@@ -155,9 +155,9 @@ object NorbertBuild extends Build {
 
         (unmanagedSources in Compile) <<= (myUnmanagedSources).map(_.flatten),
         (managedSources in Compile) <<= (myManagedSources).map(_.flatten),
-        (unmanagedSourceDirectories in Compile) <<= (projects.map(unmanagedSourceDirectories in Compile in _).join).map(_.flatten),
+//        (unmanagedSourceDirectories in Compile) <<= (projects.map(unmanagedSourceDirectories in Compile in _).join).map(_.flatten),
 
-        (doc in Compile) <<= filteredDocTask,
+ //       (doc in Compile) <<= filteredDocTask,
 
         pomExtra <<= (pomExtra, name, description) { (extra, name, desc) => extra ++ Seq(
           <name>{name}</name>,

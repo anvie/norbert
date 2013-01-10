@@ -17,19 +17,20 @@ package com.linkedin.norbert.javacompat.network;
 
 import com.linkedin.norbert.EndpointConversions;
 import com.linkedin.norbert.cluster.InvalidClusterException;
-import com.linkedin.norbert.javacompat.cluster.JavaNode;
 import com.linkedin.norbert.javacompat.cluster.Node;
-import scala.Option;
-import scala.Some;
 
+import java.util.ArrayList;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class RoundRobinLoadBalancerFactory implements LoadBalancerFactory {
     private final com.linkedin.norbert.network.client.loadbalancer.RoundRobinLoadBalancerFactory scalaLbf =
             new com.linkedin.norbert.network.client.loadbalancer.RoundRobinLoadBalancerFactory();
 
+    final AtomicInteger counter = new AtomicInteger(0);
+
     @Override
-    public LoadBalancer newLoadBalancer(Set<Endpoint> endpoints) throws InvalidClusterException {
+    public LoadBalancer newLoadBalancer(final Set<Endpoint> endpoints) throws InvalidClusterException {
       final com.linkedin.norbert.network.client.loadbalancer.LoadBalancer loadBalancer =
         scalaLbf.newLoadBalancer(EndpointConversions.convertJavaEndpointSet(endpoints));
 
@@ -41,11 +42,20 @@ public class RoundRobinLoadBalancerFactory implements LoadBalancerFactory {
 
         @Override
         public Node nextNode(Long capability){
-          Option<com.linkedin.norbert.cluster.Node> node = loadBalancer.nextNode(new Some<Long>(capability.longValue()));
-          if(node.isDefined())
-            return JavaNode.apply(node.get());
-          else
-            return null;
+
+            ArrayList<Endpoint> activeEndpoints = new ArrayList<Endpoint>();
+            for(Endpoint endpoint : endpoints){
+                if (endpoint.canServeRequests() && endpoint.getNode().isCapableOf(capability)){
+                    activeEndpoints.add(endpoint);
+                }
+            }
+
+            if(endpoints.isEmpty()){
+                return null;
+            }else{
+                return activeEndpoints.get(Math.abs(counter.getAndIncrement()) % activeEndpoints.size()).getNode();
+            }
+
         }
 
       };
